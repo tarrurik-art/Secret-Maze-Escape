@@ -1,0 +1,1220 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE SECRET MAZE</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    user-select: none;
+}
+
+html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #050608;
+    font-family: Arial, Helvetica, sans-serif;
+    color: white;
+}
+
+#game {
+    position: fixed;
+    inset: 0;
+    display: block;
+    background: #050608;
+}
+
+#hud {
+    position: fixed;
+    top: 18px;
+    left: 18px;
+    z-index: 10;
+    padding: 12px 16px;
+    border: 1px solid rgba(120,180,255,.3);
+    border-radius: 10px;
+    background: rgba(5,8,15,.78);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 0 25px rgba(0,0,0,.5);
+}
+
+#hud b {
+    color: #74b9ff;
+}
+
+#danger {
+    color: #ff5555;
+    font-weight: bold;
+}
+
+#help {
+    position: fixed;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    padding: 8px 15px;
+    border-radius: 8px;
+    background: rgba(0,0,0,.65);
+    font-size: 13px;
+    color: #aaa;
+}
+
+#map {
+    position: fixed;
+    right: 18px;
+    top: 18px;
+    width: 190px;
+    height: 190px;
+    z-index: 20;
+    border: 2px solid rgba(120,180,255,.35);
+    border-radius: 8px;
+    background: #020305;
+    display: none;
+}
+
+#message {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    background:
+        radial-gradient(circle, rgba(20,50,90,.8), rgba(0,0,0,.97) 65%);
+}
+
+#message h1 {
+    font-size: clamp(30px, 6vw, 72px);
+    margin: 0 20px 25px;
+    color: #8ed0ff;
+    text-shadow:
+        0 0 10px #248cff,
+        0 0 30px #248cff;
+    letter-spacing: 5px;
+}
+
+#message p {
+    font-size: clamp(16px, 2vw, 25px);
+    max-width: 700px;
+    line-height: 1.6;
+    margin: 8px 20px;
+}
+
+#secretWord {
+    color: #ffdf6e;
+    font-weight: bold;
+    letter-spacing: 5px;
+    text-shadow: 0 0 15px #ffb300;
+}
+
+button {
+    margin-top: 25px;
+    padding: 12px 25px;
+    border: 1px solid #559cff;
+    border-radius: 8px;
+    background: #10294a;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #174474;
+}
+
+#startScreen {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    text-align: center;
+    background:
+        radial-gradient(circle at center, #101c2c 0%, #050608 60%);
+}
+
+#startScreen h1 {
+    font-size: clamp(40px, 8vw, 90px);
+    margin: 0;
+    letter-spacing: 8px;
+    color: #dceeff;
+    text-shadow:
+        0 0 10px #448aff,
+        0 0 35px #246cff;
+}
+
+#startScreen p {
+    color: #8d9bad;
+    max-width: 650px;
+    line-height: 1.6;
+}
+
+#startButton {
+    padding: 15px 40px;
+    font-size: 19px;
+    border: 1px solid #70b5ff;
+    background: #0d2846;
+    box-shadow: 0 0 25px rgba(50,130,255,.25);
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="game"></canvas>
+<canvas id="map"></canvas>
+
+<div id="hud">
+    <div>AREA: <b id="area">UNKNOWN</b></div>
+    <div>TIME: <b id="timer">00:00</b></div>
+    <div>ENEMIES: <b id="enemyCount">0</b></div>
+    <div id="danger"></div>
+</div>
+
+<div id="help">
+    WASD / ARROWS = MOVE &nbsp; • &nbsp; M = MAP &nbsp; • &nbsp; R = NEW MAZE
+</div>
+
+<div id="startScreen">
+    <h1>THE MAZE</h1>
+    <p>
+        Nobody knows who built it.<br>
+        Nobody knows how far it goes.<br>
+        Find the exit.
+    </p>
+    <button id="startButton">ENTER THE MAZE</button>
+</div>
+
+<div id="message">
+    <h1>YOU ESCAPED</h1>
+    <p>
+        You actually found the exit.
+    </p>
+    <p>
+        Type the word
+        <span id="secretWord">esaelp</span>
+        3 times in the school chat
+    </p>
+    <p style="font-size:14px;color:#777;">
+        Do not close the game yet...
+    </p>
+    <button onclick="location.reload()">PLAY AGAIN</button>
+</div>
+
+<script>
+"use strict";
+
+/* =========================================================
+   SECRET MAZE
+   Pure Canvas 2D — NO WEBGL
+   ========================================================= */
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const mapCanvas = document.getElementById("map");
+const mapCtx = mapCanvas.getContext("2d");
+
+let W = innerWidth;
+let H = innerHeight;
+
+function resize() {
+    W = canvas.width = innerWidth;
+    H = canvas.height = innerHeight;
+}
+resize();
+addEventListener("resize", resize);
+
+
+/* =========================================================
+   MAZE SETTINGS
+   ========================================================= */
+
+const MAZE_W = 101;
+const MAZE_H = 101;
+
+let maze = [];
+let player;
+let enemies = [];
+
+const CELL = 48;
+
+let gameStarted = false;
+let gameFinished = false;
+let showMap = false;
+
+let startTime = 0;
+let lastTime = performance.now();
+
+let keys = {};
+
+
+/* =========================================================
+   INPUT
+   ========================================================= */
+
+addEventListener("keydown", e => {
+
+    const k = e.key.toLowerCase();
+
+    keys[k] = true;
+
+    if (
+        ["w","a","s","d",
+         "arrowup","arrowdown",
+         "arrowleft","arrowright",
+         " "].includes(k)
+    ) {
+        e.preventDefault();
+    }
+
+    if (k === "m") {
+        showMap = !showMap;
+        mapCanvas.style.display = showMap ? "block" : "none";
+    }
+
+    if (k === "r") {
+        generateGame();
+    }
+});
+
+addEventListener("keyup", e => {
+    keys[e.key.toLowerCase()] = false;
+});
+
+
+/* =========================================================
+   MAZE GENERATION
+   Recursive-backtracker maze.
+   Every cell is connected, so the exit is always reachable.
+   ========================================================= */
+
+function createEmptyMaze() {
+
+    maze = [];
+
+    for (let y = 0; y < MAZE_H; y++) {
+
+        maze[y] = [];
+
+        for (let x = 0; x < MAZE_W; x++) {
+
+            maze[y][x] = {
+                wall: true,
+                visited: false
+            };
+        }
+    }
+}
+
+
+function generateMaze() {
+
+    createEmptyMaze();
+
+    const stack = [];
+
+    const start = {x:1, y:1};
+
+    maze[1][1].wall = false;
+    maze[1][1].visited = true;
+
+    stack.push(start);
+
+    const directions = [
+        {x:2,y:0},
+        {x:-2,y:0},
+        {x:0,y:2},
+        {x:0,y:-2}
+    ];
+
+    while (stack.length) {
+
+        const current = stack[stack.length - 1];
+
+        let options = [];
+
+        for (const d of directions) {
+
+            const nx = current.x + d.x;
+            const ny = current.y + d.y;
+
+            if (
+                nx > 0 &&
+                ny > 0 &&
+                nx < MAZE_W-1 &&
+                ny < MAZE_H-1 &&
+                !maze[ny][nx].visited
+            ) {
+                options.push({
+                    x:nx,
+                    y:ny,
+                    dx:d.x,
+                    dy:d.y
+                });
+            }
+        }
+
+        if (!options.length) {
+            stack.pop();
+            continue;
+        }
+
+        const next =
+            options[Math.floor(Math.random()*options.length)];
+
+        const wallX =
+            current.x + next.dx / 2;
+
+        const wallY =
+            current.y + next.dy / 2;
+
+        maze[wallY][wallX].wall = false;
+
+        maze[next.y][next.x].wall = false;
+        maze[next.y][next.x].visited = true;
+
+        stack.push({
+            x:next.x,
+            y:next.y
+        });
+    }
+
+    // Make a large secret-looking exit room.
+    const ex = MAZE_W - 2;
+    const ey = MAZE_H - 2;
+
+    maze[ey][ex].wall = false;
+
+    maze[ey][ex-1].wall = false;
+    maze[ey-1][ex].wall = false;
+}
+
+
+/* =========================================================
+   PLAYER
+   ========================================================= */
+
+function resetPlayer() {
+
+    player = {
+        x: 1.5 * CELL,
+        y: 1.5 * CELL,
+        radius: 12,
+        speed: 170,
+        angle: 0
+    };
+}
+
+
+/* =========================================================
+   ENEMIES
+   ========================================================= */
+
+function spawnEnemies() {
+
+    enemies = [];
+
+    // Lots of enemies, but keep the starting area safe.
+    const amount = 24;
+
+    for (let i = 0; i < amount; i++) {
+
+        let p;
+
+        do {
+            const x =
+                Math.floor(Math.random() * (MAZE_W-2)) + 1;
+
+            const y =
+                Math.floor(Math.random() * (MAZE_H-2)) + 1;
+
+            if (!maze[y][x].wall) {
+
+                p = {
+                    x:(x+0.5)*CELL,
+                    y:(y+0.5)*CELL,
+                    speed: 35 + Math.random()*28,
+                    radius: 13,
+                    pulse: Math.random()*Math.PI*2,
+                    targetTimer: 0
+                };
+            }
+
+        } while (
+            !p ||
+            Math.hypot(p.x-player.x,p.y-player.y) < CELL*12
+        );
+
+        enemies.push(p);
+    }
+}
+
+
+/* =========================================================
+   COLLISION
+   ========================================================= */
+
+function isWallPixel(px, py) {
+
+    const x = Math.floor(px / CELL);
+    const y = Math.floor(py / CELL);
+
+    if (
+        x < 0 ||
+        y < 0 ||
+        x >= MAZE_W ||
+        y >= MAZE_H
+    ) return true;
+
+    return maze[y][x].wall;
+}
+
+
+function canMove(x,y,radius) {
+
+    return (
+        !isWallPixel(x-radius,y-radius) &&
+        !isWallPixel(x+radius,y-radius) &&
+        !isWallPixel(x-radius,y+radius) &&
+        !isWallPixel(x+radius,y+radius)
+    );
+}
+
+
+/* =========================================================
+   SIMPLE ENEMY PATHFINDING
+   Enemies periodically calculate a path using BFS.
+   ========================================================= */
+
+function findPath(startX,startY,targetX,targetY) {
+
+    const sx = Math.floor(startX/CELL);
+    const sy = Math.floor(startY/CELL);
+
+    const tx = Math.floor(targetX/CELL);
+    const ty = Math.floor(targetY/CELL);
+
+    if (
+        sx < 0 || sy < 0 ||
+        tx < 0 || ty < 0 ||
+        sx >= MAZE_W || sy >= MAZE_H ||
+        tx >= MAZE_W || ty >= MAZE_H
+    ) return null;
+
+    const queue = [{x:sx,y:sy}];
+
+    const came = new Map();
+
+    const key = (x,y) => x + "," + y;
+
+    came.set(key(sx,sy), null);
+
+    const dirs = [
+        [1,0],
+        [-1,0],
+        [0,1],
+        [0,-1]
+    ];
+
+    while (queue.length) {
+
+        const c = queue.shift();
+
+        if (c.x === tx && c.y === ty) {
+
+            let path = [];
+            let cur = c;
+
+            while (cur) {
+                path.push(cur);
+                cur = came.get(key(cur.x,cur.y));
+            }
+
+            return path.reverse();
+        }
+
+        for (const d of dirs) {
+
+            const nx = c.x+d[0];
+            const ny = c.y+d[1];
+
+            if (
+                nx < 0 || ny < 0 ||
+                nx >= MAZE_W || ny >= MAZE_H ||
+                maze[ny][nx].wall
+            ) continue;
+
+            const k = key(nx,ny);
+
+            if (!came.has(k)) {
+
+                came.set(k,c);
+
+                queue.push({
+                    x:nx,
+                    y:ny
+                });
+            }
+        }
+    }
+
+    return null;
+}
+
+
+/* =========================================================
+   UPDATE
+   ========================================================= */
+
+function update(dt) {
+
+    if (!gameStarted || gameFinished) return;
+
+    let dx = 0;
+    let dy = 0;
+
+    if (keys["w"] || keys["arrowup"]) dy--;
+    if (keys["s"] || keys["arrowdown"]) dy++;
+    if (keys["a"] || keys["arrowleft"]) dx--;
+    if (keys["d"] || keys["arrowright"]) dx++;
+
+    if (dx || dy) {
+
+        const len = Math.hypot(dx,dy);
+
+        dx /= len;
+        dy /= len;
+
+        const nx =
+            player.x + dx * player.speed * dt;
+
+        const ny =
+            player.y + dy * player.speed * dt;
+
+        if (canMove(nx,player.y,player.radius))
+            player.x = nx;
+
+        if (canMove(player.x,ny,player.radius))
+            player.y = ny;
+
+        player.angle =
+            Math.atan2(dy,dx);
+    }
+
+
+    /* -------------------------
+       Enemy AI
+       ------------------------- */
+
+    for (const e of enemies) {
+
+        e.targetTimer -= dt;
+
+        if (
+            e.targetTimer <= 0 ||
+            !e.path ||
+            e.path.length < 2
+        ) {
+
+            e.path =
+                findPath(
+                    e.x,e.y,
+                    player.x,player.y
+                );
+
+            e.targetTimer =
+                0.6 + Math.random()*0.7;
+        }
+
+        if (e.path && e.path.length > 1) {
+
+            const target = e.path[1];
+
+            const tx =
+                (target.x+0.5)*CELL;
+
+            const ty =
+                (target.y+0.5)*CELL;
+
+            let vx = tx-e.x;
+            let vy = ty-e.y;
+
+            const len = Math.hypot(vx,vy);
+
+            if (len > 1) {
+
+                vx /= len;
+                vy /= len;
+
+                const nx =
+                    e.x + vx*e.speed*dt;
+
+                const ny =
+                    e.y + vy*e.speed*dt;
+
+                if (canMove(nx,e.y,e.radius))
+                    e.x = nx;
+
+                if (canMove(e.x,ny,e.radius))
+                    e.y = ny;
+            }
+        }
+
+        e.pulse += dt*4;
+
+        // Enemy collision.
+        const dist =
+            Math.hypot(
+                player.x-e.x,
+                player.y-e.y
+            );
+
+        if (dist < player.radius+e.radius+4) {
+
+            // Teleport player back slightly.
+            player.x = 1.5*CELL;
+            player.y = 1.5*CELL;
+        }
+    }
+
+
+    /* -------------------------
+       Exit
+       ------------------------- */
+
+    const exitX =
+        (MAZE_W-1.5)*CELL;
+
+    const exitY =
+        (MAZE_H-1.5)*CELL;
+
+    if (
+        Math.hypot(
+            player.x-exitX,
+            player.y-exitY
+        ) < CELL*0.65
+    ) {
+        finishGame();
+    }
+}
+
+
+/* =========================================================
+   CAMERA
+   ========================================================= */
+
+function getCamera() {
+
+    return {
+        x:player.x-W/2,
+        y:player.y-H/2
+    };
+}
+
+
+/* =========================================================
+   DRAW
+   ========================================================= */
+
+function draw() {
+
+    ctx.clearRect(0,0,W,H);
+
+    const camera = getCamera();
+
+    // Background.
+    ctx.fillStyle = "#030507";
+    ctx.fillRect(0,0,W,H);
+
+
+    /* -------------------------
+       Visible maze
+       ------------------------- */
+
+    const startX =
+        Math.max(
+            0,
+            Math.floor(camera.x/CELL)-2
+        );
+
+    const startY =
+        Math.max(
+            0,
+            Math.floor(camera.y/CELL)-2
+        );
+
+    const endX =
+        Math.min(
+            MAZE_W,
+            Math.ceil((camera.x+W)/CELL)+2
+        );
+
+    const endY =
+        Math.min(
+            MAZE_H,
+            Math.ceil((camera.y+H)/CELL)+2
+        );
+
+
+    for (let y=startY; y<endY; y++) {
+
+        for (let x=startX; x<endX; x++) {
+
+            const sx =
+                x*CELL-camera.x;
+
+            const sy =
+                y*CELL-camera.y;
+
+            if (maze[y][x].wall) {
+
+                // Wall gradient.
+                const grad =
+                    ctx.createLinearGradient(
+                        sx,sy,
+                        sx+CELL,sy+CELL
+                    );
+
+                grad.addColorStop(0,"#18202b");
+                grad.addColorStop(1,"#090d13");
+
+                ctx.fillStyle = grad;
+                ctx.fillRect(sx,sy,CELL+1,CELL+1);
+
+                ctx.strokeStyle =
+                    "rgba(110,160,210,.12)";
+
+                ctx.strokeRect(
+                    sx+.5,
+                    sy+.5,
+                    CELL-1,
+                    CELL-1
+                );
+
+            } else {
+
+                ctx.fillStyle = "#070a0e";
+                ctx.fillRect(sx,sy,CELL,CELL);
+
+                // Floor lines.
+                ctx.strokeStyle =
+                    "rgba(80,120,160,.055)";
+
+                ctx.strokeRect(
+                    sx,sy,CELL,CELL
+                );
+            }
+        }
+    }
+
+
+    /* -------------------------
+       Exit
+       ------------------------- */
+
+    const ex =
+        (MAZE_W-1.5)*CELL-camera.x;
+
+    const ey =
+        (MAZE_H-1.5)*CELL-camera.y;
+
+    const glow =
+        ctx.createRadialGradient(
+            ex,ey,3,
+            ex,ey,75
+        );
+
+    glow.addColorStop(0,"rgba(70,180,255,.8)");
+    glow.addColorStop(1,"rgba(30,100,255,0)");
+
+    ctx.fillStyle = glow;
+
+    ctx.fillRect(
+        ex-80,
+        ey-80,
+        160,
+        160
+    );
+
+    ctx.fillStyle = "#65c7ff";
+    ctx.fillRect(
+        ex-14,
+        ey-25,
+        28,
+        50
+    );
+
+    ctx.fillStyle = "#d9f5ff";
+    ctx.font = "bold 13px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("EXIT",ex,ey-34);
+
+
+    /* -------------------------
+       Enemies
+       ------------------------- */
+
+    for (const e of enemies) {
+
+        const sx = e.x-camera.x;
+        const sy = e.y-camera.y;
+
+        const pulse =
+            1 + Math.sin(e.pulse)*.08;
+
+        const glow =
+            ctx.createRadialGradient(
+                sx,sy,2,
+                sx,sy,35
+            );
+
+        glow.addColorStop(
+            0,
+            "rgba(255,50,70,.55)"
+        );
+
+        glow.addColorStop(
+            1,
+            "rgba(255,20,40,0)"
+        );
+
+        ctx.fillStyle = glow;
+
+        ctx.beginPath();
+        ctx.arc(sx,sy,35,0,Math.PI*2);
+        ctx.fill();
+
+        ctx.save();
+
+        ctx.translate(sx,sy);
+        ctx.scale(pulse,pulse);
+
+        ctx.fillStyle = "#171b20";
+        ctx.beginPath();
+        ctx.arc(0,0,13,0,Math.PI*2);
+        ctx.fill();
+
+        // Eyes.
+        ctx.fillStyle = "#ff394f";
+
+        ctx.beginPath();
+        ctx.arc(-5,-3,2.5,0,Math.PI*2);
+        ctx.arc(5,-3,2.5,0,Math.PI*2);
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+
+    /* -------------------------
+       Player
+       ------------------------- */
+
+    const px = player.x-camera.x;
+    const py = player.y-camera.y;
+
+    ctx.save();
+
+    ctx.translate(px,py);
+
+    const playerGlow =
+        ctx.createRadialGradient(
+            0,0,2,
+            0,0,55
+        );
+
+    playerGlow.addColorStop(
+        0,
+        "rgba(120,200,255,.35)"
+    );
+
+    playerGlow.addColorStop(
+        1,
+        "rgba(80,150,255,0)"
+    );
+
+    ctx.fillStyle = playerGlow;
+
+    ctx.beginPath();
+    ctx.arc(0,0,55,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.fillStyle = "#dff6ff";
+
+    ctx.beginPath();
+    ctx.arc(0,0,player.radius,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.strokeStyle = "#4eaaff";
+    ctx.lineWidth = 2;
+
+    ctx.beginPath();
+    ctx.arc(0,0,player.radius,0,Math.PI*2);
+    ctx.stroke();
+
+    ctx.restore();
+
+
+    /* -------------------------
+       Darkness / flashlight
+       ------------------------- */
+
+    ctx.save();
+
+    ctx.fillStyle =
+        "rgba(0,0,0,.84)";
+
+    ctx.fillRect(0,0,W,H);
+
+    const light =
+        ctx.createRadialGradient(
+            px,py,35,
+            px,py,230
+        );
+
+    light.addColorStop(
+        0,
+        "rgba(0,0,0,1)"
+    );
+
+    light.addColorStop(
+        .45,
+        "rgba(0,0,0,.55)"
+    );
+
+    light.addColorStop(
+        1,
+        "rgba(0,0,0,0)"
+    );
+
+    ctx.globalCompositeOperation =
+        "destination-out";
+
+    ctx.fillStyle = light;
+
+    ctx.beginPath();
+    ctx.arc(px,py,240,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.restore();
+
+
+    /* -------------------------
+       Danger indicator
+       ------------------------- */
+
+    let nearest = Infinity;
+
+    for (const e of enemies) {
+
+        nearest =
+            Math.min(
+                nearest,
+                Math.hypot(
+                    player.x-e.x,
+                    player.y-e.y
+                )
+            );
+    }
+
+    const danger =
+        document.getElementById("danger");
+
+    if (nearest < CELL*5) {
+
+        danger.textContent =
+            "⚠ SOMETHING IS NEAR";
+
+    } else {
+
+        danger.textContent = "";
+    }
+
+
+    /* -------------------------
+       HUD
+       ------------------------- */
+
+    const elapsed =
+        Math.floor(
+            (performance.now()-startTime)/1000
+        );
+
+    const minutes =
+        String(Math.floor(elapsed/60))
+        .padStart(2,"0");
+
+    const seconds =
+        String(elapsed%60)
+        .padStart(2,"0");
+
+    document.getElementById("timer")
+        .textContent =
+        `${minutes}:${seconds}`;
+
+    document.getElementById("enemyCount")
+        .textContent =
+        enemies.length;
+
+    document.getElementById("area")
+        .textContent =
+        "MAZE-" +
+        String(
+            Math.floor(player.x/CELL)
+        ).padStart(2,"0") +
+        "-" +
+        String(
+            Math.floor(player.y/CELL)
+        ).padStart(2,"0");
+
+
+    drawMap();
+}
+
+
+/* =========================================================
+   MINIMAP
+   ========================================================= */
+
+function drawMap() {
+
+    if (!showMap) return;
+
+    const size = 190;
+
+    mapCanvas.width = size;
+    mapCanvas.height = size;
+
+    mapCtx.fillStyle = "#020305";
+    mapCtx.fillRect(0,0,size,size);
+
+    const scale =
+        size / MAZE_W;
+
+    for (let y=0;y<MAZE_H;y++) {
+
+        for (let x=0;x<MAZE_W;x++) {
+
+            if (maze[y][x].wall) {
+
+                mapCtx.fillStyle =
+                    "#1c2734";
+
+                mapCtx.fillRect(
+                    x*scale,
+                    y*scale,
+                    scale+.5,
+                    scale+.5
+                );
+            }
+        }
+    }
+
+    // Exit.
+    mapCtx.fillStyle = "#57bfff";
+
+    mapCtx.fillRect(
+        (MAZE_W-2)*scale,
+        (MAZE_H-2)*scale,
+        scale*2,
+        scale*2
+    );
+
+    // Player.
+    mapCtx.fillStyle = "#ffffff";
+
+    mapCtx.beginPath();
+
+    mapCtx.arc(
+        player.x/CELL*scale,
+        player.y/CELL*scale,
+        3,
+        0,
+        Math.PI*2
+    );
+
+    mapCtx.fill();
+}
+
+
+/* =========================================================
+   START / REGENERATE
+   ========================================================= */
+
+function generateGame() {
+
+    gameFinished = false;
+
+    generateMaze();
+    resetPlayer();
+    spawnEnemies();
+
+    startTime = performance.now();
+
+    document.getElementById("message")
+        .style.display = "none";
+}
+
+
+document.getElementById("startButton")
+.addEventListener("click", () => {
+
+    document.getElementById("startScreen")
+        .style.display = "none";
+
+    gameStarted = true;
+
+    generateGame();
+});
+
+
+/* =========================================================
+   SECRET ENDING
+   ========================================================= */
+
+function finishGame() {
+
+    gameFinished = true;
+
+    document.getElementById("message")
+        .style.display = "flex";
+}
+
+
+/* =========================================================
+   GAME LOOP
+   ========================================================= */
+
+function loop(now) {
+
+    const dt =
+        Math.min(
+            (now-lastTime)/1000,
+            .05
+        );
+
+    lastTime = now;
+
+    update(dt);
+    draw();
+
+    requestAnimationFrame(loop);
+}
+
+requestAnimationFrame(loop);
+
+</script>
+
+</body>
+</html>
+```
