@@ -9,7 +9,6 @@
 <style>
 * {
     box-sizing: border-box;
-    user-select: none;
 }
 
 html, body {
@@ -17,153 +16,121 @@ html, body {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background: #050608;
-    font-family: Arial, Helvetica, sans-serif;
+    background: #030507;
+    font-family: Arial, sans-serif;
     color: white;
 }
 
-#game {
-    position: fixed;
-    inset: 0;
+canvas {
     display: block;
-    background: #050608;
 }
 
 #hud {
     position: fixed;
-    top: 18px;
-    left: 18px;
+    top: 15px;
+    left: 15px;
     z-index: 10;
     padding: 12px 16px;
-    border: 1px solid rgba(120,180,255,.3);
+    background: rgba(5,10,18,.85);
+    border: 1px solid #31506f;
     border-radius: 10px;
-    background: rgba(5,8,15,.78);
-    backdrop-filter: blur(8px);
-    box-shadow: 0 0 25px rgba(0,0,0,.5);
+    line-height: 1.6;
 }
 
 #hud b {
-    color: #74b9ff;
+    color: #66c8ff;
 }
 
 #danger {
-    color: #ff5555;
+    color: #ff4d5a;
     font-weight: bold;
 }
 
 #help {
     position: fixed;
-    bottom: 15px;
+    bottom: 12px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 10;
     padding: 8px 15px;
+    background: rgba(0,0,0,.7);
     border-radius: 8px;
-    background: rgba(0,0,0,.65);
-    font-size: 13px;
     color: #aaa;
+    font-size: 13px;
+    text-align: center;
 }
 
 #map {
     position: fixed;
-    right: 18px;
-    top: 18px;
-    width: 190px;
-    height: 190px;
+    top: 15px;
+    right: 15px;
+    width: 200px;
+    height: 200px;
     z-index: 20;
-    border: 2px solid rgba(120,180,255,.35);
-    border-radius: 8px;
-    background: #020305;
     display: none;
+    background: #020305;
+    border: 2px solid #31506f;
+    image-rendering: pixelated;
 }
 
-#message {
+#start,
+#ending {
     position: fixed;
     inset: 0;
     z-index: 100;
-    display: none;
+    display: flex;
     align-items: center;
     justify-content: center;
     flex-direction: column;
     text-align: center;
     background:
-        radial-gradient(circle, rgba(20,50,90,.8), rgba(0,0,0,.97) 65%);
+        radial-gradient(circle, #14263c, #030507 70%);
 }
 
-#message h1 {
-    font-size: clamp(30px, 6vw, 72px);
-    margin: 0 20px 25px;
-    color: #8ed0ff;
+#ending {
+    display: none;
+}
+
+h1 {
+    margin: 0 20px 20px;
+    font-size: clamp(42px, 8vw, 90px);
+    letter-spacing: 8px;
+    color: #dff5ff;
     text-shadow:
-        0 0 10px #248cff,
-        0 0 30px #248cff;
-    letter-spacing: 5px;
+        0 0 10px #389cff,
+        0 0 30px #1768d5,
+        0 0 60px #1768d5;
 }
 
-#message p {
-    font-size: clamp(16px, 2vw, 25px);
+#start p,
+#ending p {
     max-width: 700px;
-    line-height: 1.6;
     margin: 8px 20px;
-}
-
-#secretWord {
-    color: #ffdf6e;
-    font-weight: bold;
-    letter-spacing: 5px;
-    text-shadow: 0 0 15px #ffb300;
+    line-height: 1.7;
+    color: #aab8c7;
 }
 
 button {
     margin-top: 25px;
-    padding: 12px 25px;
-    border: 1px solid #559cff;
-    border-radius: 8px;
-    background: #10294a;
+    padding: 14px 32px;
+    border: 1px solid #5eb7ff;
+    border-radius: 9px;
+    background: #0d2946;
     color: white;
-    font-size: 16px;
+    font-size: 17px;
     cursor: pointer;
 }
 
 button:hover {
-    background: #174474;
+    background: #16466f;
 }
 
-#startScreen {
-    position: fixed;
-    inset: 0;
-    z-index: 200;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    text-align: center;
-    background:
-        radial-gradient(circle at center, #101c2c 0%, #050608 60%);
-}
-
-#startScreen h1 {
-    font-size: clamp(40px, 8vw, 90px);
-    margin: 0;
-    letter-spacing: 8px;
-    color: #dceeff;
-    text-shadow:
-        0 0 10px #448aff,
-        0 0 35px #246cff;
-}
-
-#startScreen p {
-    color: #8d9bad;
-    max-width: 650px;
-    line-height: 1.6;
-}
-
-#startButton {
-    padding: 15px 40px;
-    font-size: 19px;
-    border: 1px solid #70b5ff;
-    background: #0d2846;
-    box-shadow: 0 0 25px rgba(50,130,255,.25);
+#secret {
+    color: #ffd95a;
+    font-size: 25px;
+    font-weight: bold;
+    letter-spacing: 5px;
+    text-shadow: 0 0 15px #ffb400;
 }
 </style>
 </head>
@@ -174,49 +141,52 @@ button:hover {
 <canvas id="map"></canvas>
 
 <div id="hud">
-    <div>AREA: <b id="area">UNKNOWN</b></div>
-    <div>TIME: <b id="timer">00:00</b></div>
+    <div>AREA: <b id="area">000-000</b></div>
+    <div>TIME: <b id="time">00:00</b></div>
     <div>ENEMIES: <b id="enemyCount">0</b></div>
     <div id="danger"></div>
 </div>
 
 <div id="help">
-    WASD / ARROWS = MOVE &nbsp; • &nbsp; M = MAP &nbsp; • &nbsp; R = NEW MAZE
+    WASD / ARROW KEYS = MOVE &nbsp; | &nbsp; M = MAP &nbsp; | &nbsp; R = NEW MAZE
 </div>
 
-<div id="startScreen">
+<div id="start">
     <h1>THE MAZE</h1>
     <p>
-        Nobody knows who built it.<br>
-        Nobody knows how far it goes.<br>
-        Find the exit.
+        Nobody knows who built this place.<br>
+        The maze changes every time you enter.
+    </p>
+    <p>
+        Find the exit. Don't let the things inside find you first.
     </p>
     <button id="startButton">ENTER THE MAZE</button>
 </div>
 
-<div id="message">
+<div id="ending">
     <h1>YOU ESCAPED</h1>
-    <p>
-        You actually found the exit.
-    </p>
+
+    <p>You actually found the exit.</p>
+
     <p>
         Type the word
-        <span id="secretWord">esaelp</span>
+        <span id="secret">esaelp</span>
         3 times in the school chat
     </p>
-    <p style="font-size:14px;color:#777;">
-        Do not close the game yet...
+
+    <p style="font-size:13px;color:#68727d;">
+        The maze has been waiting for someone to reach the end.
     </p>
+
     <button onclick="location.reload()">PLAY AGAIN</button>
 </div>
 
 <script>
 "use strict";
 
-/* =========================================================
-   SECRET MAZE
-   Pure Canvas 2D — NO WEBGL
-   ========================================================= */
+/* ================================
+   SETUP
+================================ */
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
@@ -224,124 +194,55 @@ const ctx = canvas.getContext("2d");
 const mapCanvas = document.getElementById("map");
 const mapCtx = mapCanvas.getContext("2d");
 
-let W = innerWidth;
-let H = innerHeight;
+let width = 0;
+let height = 0;
 
 function resize() {
-    W = canvas.width = innerWidth;
-    H = canvas.height = innerHeight;
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
 }
+
+window.addEventListener("resize", resize);
 resize();
-addEventListener("resize", resize);
 
 
-/* =========================================================
-   MAZE SETTINGS
-   ========================================================= */
+/* ================================
+   MAZE
+================================ */
 
-const MAZE_W = 101;
-const MAZE_H = 101;
-
-let maze = [];
-let player;
-let enemies = [];
-
+const SIZE = 101;
 const CELL = 48;
 
-let gameStarted = false;
-let gameFinished = false;
-let showMap = false;
+let maze = [];
 
-let startTime = 0;
-let lastTime = performance.now();
-
-let keys = {};
-
-
-/* =========================================================
-   INPUT
-   ========================================================= */
-
-addEventListener("keydown", e => {
-
-    const k = e.key.toLowerCase();
-
-    keys[k] = true;
-
-    if (
-        ["w","a","s","d",
-         "arrowup","arrowdown",
-         "arrowleft","arrowright",
-         " "].includes(k)
-    ) {
-        e.preventDefault();
-    }
-
-    if (k === "m") {
-        showMap = !showMap;
-        mapCanvas.style.display = showMap ? "block" : "none";
-    }
-
-    if (k === "r") {
-        generateGame();
-    }
-});
-
-addEventListener("keyup", e => {
-    keys[e.key.toLowerCase()] = false;
-});
-
-
-/* =========================================================
-   MAZE GENERATION
-   Recursive-backtracker maze.
-   Every cell is connected, so the exit is always reachable.
-   ========================================================= */
-
-function createEmptyMaze() {
+function createMaze() {
 
     maze = [];
 
-    for (let y = 0; y < MAZE_H; y++) {
-
+    for (let y = 0; y < SIZE; y++) {
         maze[y] = [];
 
-        for (let x = 0; x < MAZE_W; x++) {
-
-            maze[y][x] = {
-                wall: true,
-                visited: false
-            };
+        for (let x = 0; x < SIZE; x++) {
+            maze[y][x] = true;
         }
     }
-}
 
+    const stack = [{ x: 1, y: 1 }];
 
-function generateMaze() {
-
-    createEmptyMaze();
-
-    const stack = [];
-
-    const start = {x:1, y:1};
-
-    maze[1][1].wall = false;
-    maze[1][1].visited = true;
-
-    stack.push(start);
+    maze[1][1] = false;
 
     const directions = [
-        {x:2,y:0},
-        {x:-2,y:0},
-        {x:0,y:2},
-        {x:0,y:-2}
+        { x: 2, y: 0 },
+        { x: -2, y: 0 },
+        { x: 0, y: 2 },
+        { x: 0, y: -2 }
     ];
 
-    while (stack.length) {
+    while (stack.length > 0) {
 
         const current = stack[stack.length - 1];
 
-        let options = [];
+        const possible = [];
 
         for (const d of directions) {
 
@@ -351,249 +252,313 @@ function generateMaze() {
             if (
                 nx > 0 &&
                 ny > 0 &&
-                nx < MAZE_W-1 &&
-                ny < MAZE_H-1 &&
-                !maze[ny][nx].visited
+                nx < SIZE - 1 &&
+                ny < SIZE - 1 &&
+                maze[ny][nx]
             ) {
-                options.push({
-                    x:nx,
-                    y:ny,
-                    dx:d.x,
-                    dy:d.y
+                possible.push({
+                    nx,
+                    ny,
+                    dx: d.x,
+                    dy: d.y
                 });
             }
         }
 
-        if (!options.length) {
+        if (possible.length === 0) {
             stack.pop();
             continue;
         }
 
         const next =
-            options[Math.floor(Math.random()*options.length)];
+            possible[Math.floor(Math.random() * possible.length)];
 
-        const wallX =
-            current.x + next.dx / 2;
+        maze[current.y + next.dy / 2]
+             [current.x + next.dx / 2] = false;
 
-        const wallY =
-            current.y + next.dy / 2;
-
-        maze[wallY][wallX].wall = false;
-
-        maze[next.y][next.x].wall = false;
-        maze[next.y][next.x].visited = true;
+        maze[next.ny][next.nx] = false;
 
         stack.push({
-            x:next.x,
-            y:next.y
+            x: next.nx,
+            y: next.ny
         });
     }
 
-    // Make a large secret-looking exit room.
-    const ex = MAZE_W - 2;
-    const ey = MAZE_H - 2;
+    /* Guaranteed exit */
 
-    maze[ey][ex].wall = false;
+    maze[SIZE - 2][SIZE - 2] = false;
 
-    maze[ey][ex-1].wall = false;
-    maze[ey-1][ex].wall = false;
+    return true;
 }
 
 
-/* =========================================================
+/* ================================
    PLAYER
-   ========================================================= */
+================================ */
 
-function resetPlayer() {
-
-    player = {
-        x: 1.5 * CELL,
-        y: 1.5 * CELL,
-        radius: 12,
-        speed: 170,
-        angle: 0
-    };
-}
+let player = {
+    x: 1.5 * CELL,
+    y: 1.5 * CELL,
+    radius: 11,
+    speed: 180
+};
 
 
-/* =========================================================
+/* ================================
    ENEMIES
-   ========================================================= */
+================================ */
+
+let enemies = [];
 
 function spawnEnemies() {
 
     enemies = [];
 
-    // Lots of enemies, but keep the starting area safe.
-    const amount = 24;
+    const amount = 20;
 
     for (let i = 0; i < amount; i++) {
 
-        let p;
+        let x, y;
 
         do {
-            const x =
-                Math.floor(Math.random() * (MAZE_W-2)) + 1;
-
-            const y =
-                Math.floor(Math.random() * (MAZE_H-2)) + 1;
-
-            if (!maze[y][x].wall) {
-
-                p = {
-                    x:(x+0.5)*CELL,
-                    y:(y+0.5)*CELL,
-                    speed: 35 + Math.random()*28,
-                    radius: 13,
-                    pulse: Math.random()*Math.PI*2,
-                    targetTimer: 0
-                };
-            }
-
+            x = Math.floor(Math.random() * (SIZE - 2)) + 1;
+            y = Math.floor(Math.random() * (SIZE - 2)) + 1;
         } while (
-            !p ||
-            Math.hypot(p.x-player.x,p.y-player.y) < CELL*12
+            maze[y][x] ||
+            Math.hypot(
+                x * CELL - player.x,
+                y * CELL - player.y
+            ) < CELL * 10
         );
 
-        enemies.push(p);
+        enemies.push({
+            x: (x + .5) * CELL,
+            y: (y + .5) * CELL,
+            speed: 45 + Math.random() * 35,
+            radius: 12,
+            angle: Math.random() * Math.PI * 2
+        });
     }
 }
 
 
-/* =========================================================
+/* ================================
    COLLISION
-   ========================================================= */
+================================ */
 
-function isWallPixel(px, py) {
+function wallAt(x, y) {
 
-    const x = Math.floor(px / CELL);
-    const y = Math.floor(py / CELL);
+    const cx = Math.floor(x / CELL);
+    const cy = Math.floor(y / CELL);
 
     if (
-        x < 0 ||
-        y < 0 ||
-        x >= MAZE_W ||
-        y >= MAZE_H
-    ) return true;
+        cx < 0 ||
+        cy < 0 ||
+        cx >= SIZE ||
+        cy >= SIZE
+    ) {
+        return true;
+    }
 
-    return maze[y][x].wall;
+    return maze[cy][cx];
 }
 
-
-function canMove(x,y,radius) {
+function canMove(x, y, radius) {
 
     return (
-        !isWallPixel(x-radius,y-radius) &&
-        !isWallPixel(x+radius,y-radius) &&
-        !isWallPixel(x-radius,y+radius) &&
-        !isWallPixel(x+radius,y+radius)
+        !wallAt(x - radius, y - radius) &&
+        !wallAt(x + radius, y - radius) &&
+        !wallAt(x - radius, y + radius) &&
+        !wallAt(x + radius, y + radius)
     );
 }
 
 
-/* =========================================================
-   SIMPLE ENEMY PATHFINDING
-   Enemies periodically calculate a path using BFS.
-   ========================================================= */
+/* ================================
+   INPUT
+================================ */
 
-function findPath(startX,startY,targetX,targetY) {
+const keys = {};
 
-    const sx = Math.floor(startX/CELL);
-    const sy = Math.floor(startY/CELL);
+window.addEventListener("keydown", function(e) {
 
-    const tx = Math.floor(targetX/CELL);
-    const ty = Math.floor(targetY/CELL);
+    keys[e.key.toLowerCase()] = true;
 
     if (
-        sx < 0 || sy < 0 ||
-        tx < 0 || ty < 0 ||
-        sx >= MAZE_W || sy >= MAZE_H ||
-        tx >= MAZE_W || ty >= MAZE_H
-    ) return null;
-
-    const queue = [{x:sx,y:sy}];
-
-    const came = new Map();
-
-    const key = (x,y) => x + "," + y;
-
-    came.set(key(sx,sy), null);
-
-    const dirs = [
-        [1,0],
-        [-1,0],
-        [0,1],
-        [0,-1]
-    ];
-
-    while (queue.length) {
-
-        const c = queue.shift();
-
-        if (c.x === tx && c.y === ty) {
-
-            let path = [];
-            let cur = c;
-
-            while (cur) {
-                path.push(cur);
-                cur = came.get(key(cur.x,cur.y));
-            }
-
-            return path.reverse();
-        }
-
-        for (const d of dirs) {
-
-            const nx = c.x+d[0];
-            const ny = c.y+d[1];
-
-            if (
-                nx < 0 || ny < 0 ||
-                nx >= MAZE_W || ny >= MAZE_H ||
-                maze[ny][nx].wall
-            ) continue;
-
-            const k = key(nx,ny);
-
-            if (!came.has(k)) {
-
-                came.set(k,c);
-
-                queue.push({
-                    x:nx,
-                    y:ny
-                });
-            }
-        }
+        e.key === "ArrowUp" ||
+        e.key === "ArrowDown" ||
+        e.key === "ArrowLeft" ||
+        e.key === "ArrowRight" ||
+        e.key === " "
+    ) {
+        e.preventDefault();
     }
 
-    return null;
+    if (e.key.toLowerCase() === "m") {
+        mapCanvas.style.display =
+            mapCanvas.style.display === "block"
+                ? "none"
+                : "block";
+    }
+
+    if (e.key.toLowerCase() === "r") {
+        startGame();
+    }
+});
+
+window.addEventListener("keyup", function(e) {
+    keys[e.key.toLowerCase()] = false;
+});
+
+
+/* ================================
+   GAME STATE
+================================ */
+
+let playing = false;
+let finished = false;
+let startTime = 0;
+
+function startGame() {
+
+    createMaze();
+
+    player.x = CELL * 1.5;
+    player.y = CELL * 1.5;
+
+    spawnEnemies();
+
+    playing = true;
+    finished = false;
+    startTime = performance.now();
+
+    document.getElementById("start").style.display = "none";
+    document.getElementById("ending").style.display = "none";
 }
 
 
-/* =========================================================
+/* ================================
+   ENEMY AI
+================================ */
+
+/*
+   Instead of expensive full pathfinding every frame,
+   enemies move toward the player's current maze cell.
+*/
+
+function moveEnemy(enemy, dt) {
+
+    const playerCellX =
+        Math.floor(player.x / CELL);
+
+    const playerCellY =
+        Math.floor(player.y / CELL);
+
+    let best = null;
+    let bestDistance = Infinity;
+
+    const enemyCellX =
+        Math.floor(enemy.x / CELL);
+
+    const enemyCellY =
+        Math.floor(enemy.y / CELL);
+
+    const directions = [
+        { x: 1, y: 0 },
+        { x: -1, y: 0 },
+        { x: 0, y: 1 },
+        { x: 0, y: -1 }
+    ];
+
+    for (const d of directions) {
+
+        const nx = enemyCellX + d.x;
+        const ny = enemyCellY + d.y;
+
+        if (
+            nx < 0 ||
+            ny < 0 ||
+            nx >= SIZE ||
+            ny >= SIZE ||
+            maze[ny][nx]
+        ) continue;
+
+        const distance =
+            Math.hypot(
+                nx - playerCellX,
+                ny - playerCellY
+            );
+
+        if (distance < bestDistance) {
+            bestDistance = distance;
+            best = { x: nx, y: ny };
+        }
+    }
+
+    if (!best) return;
+
+    const targetX =
+        (best.x + .5) * CELL;
+
+    const targetY =
+        (best.y + .5) * CELL;
+
+    let dx = targetX - enemy.x;
+    let dy = targetY - enemy.y;
+
+    const distance = Math.hypot(dx, dy);
+
+    if (distance > 2) {
+
+        dx /= distance;
+        dy /= distance;
+
+        const nx =
+            enemy.x + dx * enemy.speed * dt;
+
+        const ny =
+            enemy.y + dy * enemy.speed * dt;
+
+        if (canMove(nx, enemy.y, enemy.radius))
+            enemy.x = nx;
+
+        if (canMove(enemy.x, ny, enemy.radius))
+            enemy.y = ny;
+    }
+
+    enemy.angle += dt * 4;
+}
+
+
+/* ================================
    UPDATE
-   ========================================================= */
+================================ */
 
 function update(dt) {
 
-    if (!gameStarted || gameFinished) return;
+    if (!playing || finished) return;
 
     let dx = 0;
     let dy = 0;
 
-    if (keys["w"] || keys["arrowup"]) dy--;
-    if (keys["s"] || keys["arrowdown"]) dy++;
-    if (keys["a"] || keys["arrowleft"]) dx--;
-    if (keys["d"] || keys["arrowright"]) dx++;
+    if (keys["w"] || keys["arrowup"])
+        dy -= 1;
 
-    if (dx || dy) {
+    if (keys["s"] || keys["arrowdown"])
+        dy += 1;
 
-        const len = Math.hypot(dx,dy);
+    if (keys["a"] || keys["arrowleft"])
+        dx -= 1;
 
-        dx /= len;
-        dy /= len;
+    if (keys["d"] || keys["arrowright"])
+        dx += 1;
+
+    if (dx !== 0 || dy !== 0) {
+
+        const length = Math.hypot(dx, dy);
+
+        dx /= length;
+        dy /= length;
 
         const nx =
             player.x + dx * player.speed * dt;
@@ -601,617 +566,532 @@ function update(dt) {
         const ny =
             player.y + dy * player.speed * dt;
 
-        if (canMove(nx,player.y,player.radius))
+        if (canMove(nx, player.y, player.radius))
             player.x = nx;
 
-        if (canMove(player.x,ny,player.radius))
+        if (canMove(player.x, ny, player.radius))
             player.y = ny;
-
-        player.angle =
-            Math.atan2(dy,dx);
     }
 
+    for (const enemy of enemies) {
 
-    /* -------------------------
-       Enemy AI
-       ------------------------- */
+        moveEnemy(enemy, dt);
 
-    for (const e of enemies) {
-
-        e.targetTimer -= dt;
-
-        if (
-            e.targetTimer <= 0 ||
-            !e.path ||
-            e.path.length < 2
-        ) {
-
-            e.path =
-                findPath(
-                    e.x,e.y,
-                    player.x,player.y
-                );
-
-            e.targetTimer =
-                0.6 + Math.random()*0.7;
-        }
-
-        if (e.path && e.path.length > 1) {
-
-            const target = e.path[1];
-
-            const tx =
-                (target.x+0.5)*CELL;
-
-            const ty =
-                (target.y+0.5)*CELL;
-
-            let vx = tx-e.x;
-            let vy = ty-e.y;
-
-            const len = Math.hypot(vx,vy);
-
-            if (len > 1) {
-
-                vx /= len;
-                vy /= len;
-
-                const nx =
-                    e.x + vx*e.speed*dt;
-
-                const ny =
-                    e.y + vy*e.speed*dt;
-
-                if (canMove(nx,e.y,e.radius))
-                    e.x = nx;
-
-                if (canMove(e.x,ny,e.radius))
-                    e.y = ny;
-            }
-        }
-
-        e.pulse += dt*4;
-
-        // Enemy collision.
-        const dist =
+        const distance =
             Math.hypot(
-                player.x-e.x,
-                player.y-e.y
+                player.x - enemy.x,
+                player.y - enemy.y
             );
 
-        if (dist < player.radius+e.radius+4) {
+        if (distance < 24) {
 
-            // Teleport player back slightly.
-            player.x = 1.5*CELL;
-            player.y = 1.5*CELL;
+            /* Enemy catches player.
+               Send them back to the entrance. */
+
+            player.x = CELL * 1.5;
+            player.y = CELL * 1.5;
         }
     }
 
-
-    /* -------------------------
-       Exit
-       ------------------------- */
+    /* Exit */
 
     const exitX =
-        (MAZE_W-1.5)*CELL;
+        (SIZE - 1.5) * CELL;
 
     const exitY =
-        (MAZE_H-1.5)*CELL;
+        (SIZE - 1.5) * CELL;
 
     if (
         Math.hypot(
-            player.x-exitX,
-            player.y-exitY
-        ) < CELL*0.65
+            player.x - exitX,
+            player.y - exitY
+        ) < CELL
     ) {
         finishGame();
     }
 }
 
 
-/* =========================================================
-   CAMERA
-   ========================================================= */
+/* ================================
+   DRAW MAZE
+================================ */
 
-function getCamera() {
-
-    return {
-        x:player.x-W/2,
-        y:player.y-H/2
-    };
-}
-
-
-/* =========================================================
-   DRAW
-   ========================================================= */
-
-function draw() {
-
-    ctx.clearRect(0,0,W,H);
-
-    const camera = getCamera();
-
-    // Background.
-    ctx.fillStyle = "#030507";
-    ctx.fillRect(0,0,W,H);
-
-
-    /* -------------------------
-       Visible maze
-       ------------------------- */
+function drawMaze(cameraX, cameraY) {
 
     const startX =
-        Math.max(
-            0,
-            Math.floor(camera.x/CELL)-2
-        );
+        Math.max(0, Math.floor(cameraX / CELL) - 2);
 
     const startY =
-        Math.max(
-            0,
-            Math.floor(camera.y/CELL)-2
-        );
+        Math.max(0, Math.floor(cameraY / CELL) - 2);
 
     const endX =
         Math.min(
-            MAZE_W,
-            Math.ceil((camera.x+W)/CELL)+2
+            SIZE,
+            Math.ceil((cameraX + width) / CELL) + 2
         );
 
     const endY =
         Math.min(
-            MAZE_H,
-            Math.ceil((camera.y+H)/CELL)+2
+            SIZE,
+            Math.ceil((cameraY + height) / CELL) + 2
         );
 
+    for (let y = startY; y < endY; y++) {
 
-    for (let y=startY; y<endY; y++) {
-
-        for (let x=startX; x<endX; x++) {
+        for (let x = startX; x < endX; x++) {
 
             const sx =
-                x*CELL-camera.x;
+                x * CELL - cameraX;
 
             const sy =
-                y*CELL-camera.y;
+                y * CELL - cameraY;
 
-            if (maze[y][x].wall) {
+            if (maze[y][x]) {
 
-                // Wall gradient.
-                const grad =
+                const gradient =
                     ctx.createLinearGradient(
-                        sx,sy,
-                        sx+CELL,sy+CELL
+                        sx,
+                        sy,
+                        sx + CELL,
+                        sy + CELL
                     );
 
-                grad.addColorStop(0,"#18202b");
-                grad.addColorStop(1,"#090d13");
+                gradient.addColorStop(0, "#1b2633");
+                gradient.addColorStop(1, "#070b10");
 
-                ctx.fillStyle = grad;
-                ctx.fillRect(sx,sy,CELL+1,CELL+1);
+                ctx.fillStyle = gradient;
+                ctx.fillRect(
+                    sx,
+                    sy,
+                    CELL + 1,
+                    CELL + 1
+                );
 
                 ctx.strokeStyle =
-                    "rgba(110,160,210,.12)";
+                    "rgba(100,170,220,.12)";
 
                 ctx.strokeRect(
-                    sx+.5,
-                    sy+.5,
-                    CELL-1,
-                    CELL-1
+                    sx,
+                    sy,
+                    CELL,
+                    CELL
                 );
 
             } else {
 
-                ctx.fillStyle = "#070a0e";
-                ctx.fillRect(sx,sy,CELL,CELL);
+                ctx.fillStyle = "#080c11";
 
-                // Floor lines.
-                ctx.strokeStyle =
-                    "rgba(80,120,160,.055)";
-
-                ctx.strokeRect(
-                    sx,sy,CELL,CELL
+                ctx.fillRect(
+                    sx,
+                    sy,
+                    CELL,
+                    CELL
                 );
             }
         }
     }
+}
 
 
-    /* -------------------------
-       Exit
-       ------------------------- */
+/* ================================
+   DRAW EXIT
+================================ */
 
-    const ex =
-        (MAZE_W-1.5)*CELL-camera.x;
+function drawExit(cameraX, cameraY) {
 
-    const ey =
-        (MAZE_H-1.5)*CELL-camera.y;
+    const x =
+        (SIZE - 1.5) * CELL - cameraX;
+
+    const y =
+        (SIZE - 1.5) * CELL - cameraY;
 
     const glow =
         ctx.createRadialGradient(
-            ex,ey,3,
-            ex,ey,75
+            x, y, 2,
+            x, y, 90
         );
 
-    glow.addColorStop(0,"rgba(70,180,255,.8)");
-    glow.addColorStop(1,"rgba(30,100,255,0)");
+    glow.addColorStop(
+        0,
+        "rgba(70,190,255,.9)"
+    );
+
+    glow.addColorStop(
+        1,
+        "rgba(30,100,255,0)"
+    );
 
     ctx.fillStyle = glow;
 
-    ctx.fillRect(
-        ex-80,
-        ey-80,
-        160,
-        160
-    );
+    ctx.beginPath();
+    ctx.arc(x, y, 90, 0, Math.PI * 2);
+    ctx.fill();
 
-    ctx.fillStyle = "#65c7ff";
+    ctx.fillStyle = "#63caff";
+
     ctx.fillRect(
-        ex-14,
-        ey-25,
-        28,
+        x - 15,
+        y - 25,
+        30,
         50
     );
 
-    ctx.fillStyle = "#d9f5ff";
+    ctx.fillStyle = "#e8faff";
+
     ctx.font = "bold 13px Arial";
     ctx.textAlign = "center";
-    ctx.fillText("EXIT",ex,ey-34);
+
+    ctx.fillText(
+        "EXIT",
+        x,
+        y - 35
+    );
+}
 
 
-    /* -------------------------
-       Enemies
-       ------------------------- */
+/* ================================
+   DRAW ENEMIES
+================================ */
 
-    for (const e of enemies) {
+function drawEnemies(cameraX, cameraY) {
 
-        const sx = e.x-camera.x;
-        const sy = e.y-camera.y;
+    for (const enemy of enemies) {
+
+        const x = enemy.x - cameraX;
+        const y = enemy.y - cameraY;
 
         const pulse =
-            1 + Math.sin(e.pulse)*.08;
+            1 + Math.sin(enemy.angle) * .08;
 
         const glow =
             ctx.createRadialGradient(
-                sx,sy,2,
-                sx,sy,35
+                x, y, 2,
+                x, y, 45
             );
 
         glow.addColorStop(
             0,
-            "rgba(255,50,70,.55)"
+            "rgba(255,30,50,.55)"
         );
 
         glow.addColorStop(
             1,
-            "rgba(255,20,40,0)"
+            "rgba(255,0,20,0)"
         );
 
         ctx.fillStyle = glow;
 
         ctx.beginPath();
-        ctx.arc(sx,sy,35,0,Math.PI*2);
+        ctx.arc(x, y, 45, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.save();
 
-        ctx.translate(sx,sy);
-        ctx.scale(pulse,pulse);
+        ctx.translate(x, y);
+        ctx.scale(pulse, pulse);
 
-        ctx.fillStyle = "#171b20";
+        ctx.fillStyle = "#171a20";
+
         ctx.beginPath();
-        ctx.arc(0,0,13,0,Math.PI*2);
+        ctx.arc(0, 0, 13, 0, Math.PI * 2);
         ctx.fill();
 
-        // Eyes.
-        ctx.fillStyle = "#ff394f";
+        ctx.fillStyle = "#ff334f";
 
         ctx.beginPath();
-        ctx.arc(-5,-3,2.5,0,Math.PI*2);
-        ctx.arc(5,-3,2.5,0,Math.PI*2);
+        ctx.arc(-5, -3, 3, 0, Math.PI * 2);
+        ctx.arc(5, -3, 3, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.restore();
     }
-
-
-    /* -------------------------
-       Player
-       ------------------------- */
-
-    const px = player.x-camera.x;
-    const py = player.y-camera.y;
-
-    ctx.save();
-
-    ctx.translate(px,py);
-
-    const playerGlow =
-        ctx.createRadialGradient(
-            0,0,2,
-            0,0,55
-        );
-
-    playerGlow.addColorStop(
-        0,
-        "rgba(120,200,255,.35)"
-    );
-
-    playerGlow.addColorStop(
-        1,
-        "rgba(80,150,255,0)"
-    );
-
-    ctx.fillStyle = playerGlow;
-
-    ctx.beginPath();
-    ctx.arc(0,0,55,0,Math.PI*2);
-    ctx.fill();
-
-    ctx.fillStyle = "#dff6ff";
-
-    ctx.beginPath();
-    ctx.arc(0,0,player.radius,0,Math.PI*2);
-    ctx.fill();
-
-    ctx.strokeStyle = "#4eaaff";
-    ctx.lineWidth = 2;
-
-    ctx.beginPath();
-    ctx.arc(0,0,player.radius,0,Math.PI*2);
-    ctx.stroke();
-
-    ctx.restore();
-
-
-    /* -------------------------
-       Darkness / flashlight
-       ------------------------- */
-
-    ctx.save();
-
-    ctx.fillStyle =
-        "rgba(0,0,0,.84)";
-
-    ctx.fillRect(0,0,W,H);
-
-    const light =
-        ctx.createRadialGradient(
-            px,py,35,
-            px,py,230
-        );
-
-    light.addColorStop(
-        0,
-        "rgba(0,0,0,1)"
-    );
-
-    light.addColorStop(
-        .45,
-        "rgba(0,0,0,.55)"
-    );
-
-    light.addColorStop(
-        1,
-        "rgba(0,0,0,0)"
-    );
-
-    ctx.globalCompositeOperation =
-        "destination-out";
-
-    ctx.fillStyle = light;
-
-    ctx.beginPath();
-    ctx.arc(px,py,240,0,Math.PI*2);
-    ctx.fill();
-
-    ctx.restore();
-
-
-    /* -------------------------
-       Danger indicator
-       ------------------------- */
-
-    let nearest = Infinity;
-
-    for (const e of enemies) {
-
-        nearest =
-            Math.min(
-                nearest,
-                Math.hypot(
-                    player.x-e.x,
-                    player.y-e.y
-                )
-            );
-    }
-
-    const danger =
-        document.getElementById("danger");
-
-    if (nearest < CELL*5) {
-
-        danger.textContent =
-            "⚠ SOMETHING IS NEAR";
-
-    } else {
-
-        danger.textContent = "";
-    }
-
-
-    /* -------------------------
-       HUD
-       ------------------------- */
-
-    const elapsed =
-        Math.floor(
-            (performance.now()-startTime)/1000
-        );
-
-    const minutes =
-        String(Math.floor(elapsed/60))
-        .padStart(2,"0");
-
-    const seconds =
-        String(elapsed%60)
-        .padStart(2,"0");
-
-    document.getElementById("timer")
-        .textContent =
-        `${minutes}:${seconds}`;
-
-    document.getElementById("enemyCount")
-        .textContent =
-        enemies.length;
-
-    document.getElementById("area")
-        .textContent =
-        "MAZE-" +
-        String(
-            Math.floor(player.x/CELL)
-        ).padStart(2,"0") +
-        "-" +
-        String(
-            Math.floor(player.y/CELL)
-        ).padStart(2,"0");
-
-
-    drawMap();
 }
 
 
-/* =========================================================
+/* ================================
+   DRAW PLAYER
+================================ */
+
+function drawPlayer(cameraX, cameraY) {
+
+    const x = player.x - cameraX;
+    const y = player.y - cameraY;
+
+    const glow =
+        ctx.createRadialGradient(
+            x, y, 2,
+            x, y, 60
+        );
+
+    glow.addColorStop(
+        0,
+        "rgba(100,200,255,.4)"
+    );
+
+    glow.addColorStop(
+        1,
+        "rgba(40,100,255,0)"
+    );
+
+    ctx.fillStyle = glow;
+
+    ctx.beginPath();
+    ctx.arc(x, y, 60, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#e4f8ff";
+
+    ctx.beginPath();
+    ctx.arc(
+        x,
+        y,
+        player.radius,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+    ctx.strokeStyle = "#4eb7ff";
+    ctx.lineWidth = 2;
+
+    ctx.stroke();
+}
+
+
+/* ================================
+   DARKNESS
+================================ */
+
+function drawDarkness(cameraX, cameraY) {
+
+    const px = player.x - cameraX;
+    const py = player.y - cameraY;
+
+    /*
+       Use a normal dark overlay instead of
+       destination-out, so it works reliably.
+    */
+
+    const darkness =
+        ctx.createRadialGradient(
+            px,
+            py,
+            45,
+            px,
+            py,
+            270
+        );
+
+    darkness.addColorStop(
+        0,
+        "rgba(0,0,0,0)"
+    );
+
+    darkness.addColorStop(
+        .45,
+        "rgba(0,0,0,.35)"
+    );
+
+    darkness.addColorStop(
+        1,
+        "rgba(0,0,0,.88)"
+    );
+
+    ctx.fillStyle = darkness;
+
+    ctx.fillRect(
+        0,
+        0,
+        width,
+        height
+    );
+}
+
+
+/* ================================
    MINIMAP
-   ========================================================= */
+================================ */
 
 function drawMap() {
 
-    if (!showMap) return;
+    if (mapCanvas.style.display !== "block")
+        return;
 
-    const size = 190;
+    const size = 200;
 
     mapCanvas.width = size;
     mapCanvas.height = size;
 
     mapCtx.fillStyle = "#020305";
-    mapCtx.fillRect(0,0,size,size);
+    mapCtx.fillRect(0, 0, size, size);
 
-    const scale =
-        size / MAZE_W;
+    const scale = size / SIZE;
 
-    for (let y=0;y<MAZE_H;y++) {
+    for (let y = 0; y < SIZE; y++) {
 
-        for (let x=0;x<MAZE_W;x++) {
+        for (let x = 0; x < SIZE; x++) {
 
-            if (maze[y][x].wall) {
+            if (maze[y][x]) {
 
-                mapCtx.fillStyle =
-                    "#1c2734";
+                mapCtx.fillStyle = "#273544";
 
                 mapCtx.fillRect(
-                    x*scale,
-                    y*scale,
-                    scale+.5,
-                    scale+.5
+                    x * scale,
+                    y * scale,
+                    scale + 1,
+                    scale + 1
                 );
             }
         }
     }
 
-    // Exit.
-    mapCtx.fillStyle = "#57bfff";
+    /* Exit */
+
+    mapCtx.fillStyle = "#5ed0ff";
 
     mapCtx.fillRect(
-        (MAZE_W-2)*scale,
-        (MAZE_H-2)*scale,
-        scale*2,
-        scale*2
+        (SIZE - 2) * scale,
+        (SIZE - 2) * scale,
+        scale * 2,
+        scale * 2
     );
 
-    // Player.
-    mapCtx.fillStyle = "#ffffff";
+    /* Player */
+
+    mapCtx.fillStyle = "white";
 
     mapCtx.beginPath();
 
     mapCtx.arc(
-        player.x/CELL*scale,
-        player.y/CELL*scale,
+        (player.x / CELL) * scale,
+        (player.y / CELL) * scale,
         3,
         0,
-        Math.PI*2
+        Math.PI * 2
     );
 
     mapCtx.fill();
 }
 
 
-/* =========================================================
-   START / REGENERATE
-   ========================================================= */
+/* ================================
+   MAIN DRAW
+================================ */
 
-function generateGame() {
+function draw() {
 
-    gameFinished = false;
+    ctx.clearRect(0, 0, width, height);
 
-    generateMaze();
-    resetPlayer();
-    spawnEnemies();
+    if (!playing) return;
 
-    startTime = performance.now();
+    const cameraX =
+        player.x - width / 2;
 
-    document.getElementById("message")
-        .style.display = "none";
+    const cameraY =
+        player.y - height / 2;
+
+    ctx.fillStyle = "#030507";
+    ctx.fillRect(
+        0,
+        0,
+        width,
+        height
+    );
+
+    drawMaze(cameraX, cameraY);
+    drawExit(cameraX, cameraY);
+    drawEnemies(cameraX, cameraY);
+    drawPlayer(cameraX, cameraY);
+    drawDarkness(cameraX, cameraY);
+
+    /* HUD */
+
+    const seconds =
+        Math.floor(
+            (performance.now() - startTime) / 1000
+        );
+
+    const minutes =
+        String(Math.floor(seconds / 60))
+        .padStart(2, "0");
+
+    const secs =
+        String(seconds % 60)
+        .padStart(2, "0");
+
+    document.getElementById("time")
+        .textContent =
+        minutes + ":" + secs;
+
+    document.getElementById("area")
+        .textContent =
+        String(Math.floor(player.x / CELL))
+        .padStart(3, "0")
+        + "-" +
+        String(Math.floor(player.y / CELL))
+        .padStart(3, "0");
+
+    document.getElementById("enemyCount")
+        .textContent = enemies.length;
+
+    let nearest = Infinity;
+
+    for (const enemy of enemies) {
+
+        nearest = Math.min(
+            nearest,
+            Math.hypot(
+                player.x - enemy.x,
+                player.y - enemy.y
+            )
+        );
+    }
+
+    document.getElementById("danger")
+        .textContent =
+        nearest < CELL * 5
+            ? "⚠ SOMETHING IS NEAR"
+            : "";
+
+    drawMap();
 }
 
 
-document.getElementById("startButton")
-.addEventListener("click", () => {
-
-    document.getElementById("startScreen")
-        .style.display = "none";
-
-    gameStarted = true;
-
-    generateGame();
-});
-
-
-/* =========================================================
-   SECRET ENDING
-   ========================================================= */
-
-function finishGame() {
-
-    gameFinished = true;
-
-    document.getElementById("message")
-        .style.display = "flex";
-}
-
-
-/* =========================================================
+/* ================================
    GAME LOOP
-   ========================================================= */
+================================ */
 
-function loop(now) {
+let previousTime = performance.now();
+
+function gameLoop(now) {
 
     const dt =
         Math.min(
-            (now-lastTime)/1000,
+            (now - previousTime) / 1000,
             .05
         );
 
-    lastTime = now;
+    previousTime = now;
 
     update(dt);
     draw();
 
-    requestAnimationFrame(loop);
+    requestAnimationFrame(gameLoop);
 }
 
-requestAnimationFrame(loop);
+
+/* ================================
+   START
+================================ */
+
+document
+    .getElementById("startButton")
+    .addEventListener("click", function() {
+        startGame();
+    });
+
+requestAnimationFrame(gameLoop);
 
 </script>
 
